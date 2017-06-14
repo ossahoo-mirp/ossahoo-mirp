@@ -1,58 +1,44 @@
 void updateBallVelocity() {
-  // Detect Ball collisions with walls or paddles
-  //top
-  if(ballY<ballRadius)
-  {ballVy*=-1;
-  ballY=ballRadius;}
-  //bottom
-  if(ballY>displayHeight-ballRadius){
-    ballVy*=-1;
-    ballY=displayHeight-ballRadius;}
-    // If collides with left wall, right player gains one point
-  if(ballX<=ballRadius)
-  leftLose();
- // If collides with right wall, left player gains one point
- if(ballX>=displayWidth-ballRadius)
- rightLose();
-    //left paddle
-   if(ballX<=ballRadius+paddleWidth)
-  {
-    if((ballY<=leftPaddle+paddleLength)&&(ballY>=leftPaddle))
-    {ballVx*=-1;
-    ballX=ballRadius+paddleWidth;}
-  }
-  //right paddle
-  if(ballX>=(displayWidth-ballRadius)-paddleWidth)
-  {
-    if((ballY<=rightPaddle+paddleLength)&&(ballY>=rightPaddle))
-    {ballVx*=-1;
-    ballX=displayWidth-ballRadius-paddleWidth;}
-  }
-  // If collide with paddle, or top/bottom wall, then bounce off
-
+  ballVy += gravity;
 }
 
 void updateBallPosition() {
   ballX += ballVx;
   ballY += ballVy;
+  if (left)
+    ballX -= BALL_VELOCITY;
+  if (right)
+    ballX += BALL_VELOCITY;
 }
 
-void updatePaddlePositions() {
-  // Based on the keys pressedd, move the paddles (update Y position)
-  if(leftPaddle>0)
-  {if(left_up)
-  leftPaddle-=PADDLE_VELOCITY;}
-  
-  if(leftPaddle<displayHeight-paddleLength){
-  if(left_down)
-  leftPaddle+=PADDLE_VELOCITY;}
-  
-   if(rightPaddle>0){
-  if(right_up)
-  rightPaddle-=PADDLE_VELOCITY;}
-  
-  if(rightPaddle<displayHeight-paddleLength){
-  if(right_down)
-  rightPaddle+=PADDLE_VELOCITY;}
-  // Make sure the paddles don't leave the screen
+void resolveCollisions() {
+  float m = tan(-beamAngle), c = -pivotPos;
+  float dist = m*(ballX-displayWidth/2) + c + ballY;
+  dist /= -sqrt(m*m + 1);
+  dist -= pivotPos - displayHeight/2 + beamWidth + ballRadius;
+  if (dist < 0) {
+    float dx = dist*sin(beamAngle), dy = -dist*cos(beamAngle);
+    ballX -= dx;
+    ballY -= dy;
+    float dotProduct = ballVx*cos(-beamAngle) - ballVy*sin(-beamAngle);
+    ballVx = dotProduct*cos(-beamAngle);
+    ballVy = -dotProduct*sin(-beamAngle);
+  }
+  dist = sqrt((ballX-displayWidth/2)*(ballX-displayWidth/2) + (ballY-pivotPos)*(ballY-pivotPos));
+  if(dist > beamLength){
+    ballX += (ballX>displayWidth/2 ? -1 : 1)*10;
+    ballVx = 0;
+    ballVy = 0;
+  }
+}
+
+void gotoAngle(float angle) {
+  desiredBeamAngle = angle + random(-angleError, angleError);
+}
+
+void moveBeam() {
+  if (desiredBeamAngle > beamAngle)
+    beamAngle += beamAngleIncrement;
+  if (desiredBeamAngle < beamAngle)
+    beamAngle -= beamAngleIncrement;
 }
